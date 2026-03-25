@@ -9,6 +9,7 @@ import { registerPurchaseOrderTools } from "./tools/purchaseOrders.js";
 import { registerDropshipmentTools } from "./tools/dropshipments.js";
 import { registerBillTools } from "./tools/bills.js";
 import { registerContactTools, registerItemTools } from "./tools/contactsAndItems.js";
+import { registerLearnTools } from "./tools/zohoLearn.js";
 
 // ─── Server Init ─────────────────────────────────────────────────────────────
 
@@ -26,6 +27,7 @@ registerDropshipmentTools(server);
 registerBillTools(server);
 registerContactTools(server);
 registerItemTools(server);
+registerLearnTools(server);
 
 // ─── Transport ────────────────────────────────────────────────────────────────
 
