@@ -3,7 +3,6 @@ import {
   ZOHO_ACCOUNTS_URL,
   ZOHO_BOOKS_URL,
   ZOHO_INVENTORY_URL,
-  ZOHO_CRM_URL,
   ZOHO_LEARN_URL,
   TOKEN_REFRESH_BUFFER_MS,
 } from "../constants.js";
@@ -73,10 +72,8 @@ function createApiClient(baseURL: string): AxiosInstance {
     const { organizationId } = getConfig();
     config.headers["Authorization"] = `Zoho-oauthtoken ${token}`;
     config.headers["Content-Type"] = "application/json";
-    // Add org ID as query param for Books and Inventory
-    if (baseURL !== ZOHO_CRM_URL) {
-      config.params = { ...config.params, organization_id: organizationId };
-    }
+    // Add org ID as query param for all clients
+    config.params = { ...config.params, organization_id: organizationId };
     return config;
   });
 
@@ -103,7 +100,6 @@ function createApiClient(baseURL: string): AxiosInstance {
 
 export const booksClient = createApiClient(ZOHO_BOOKS_URL);
 export const inventoryClient = createApiClient(ZOHO_INVENTORY_URL);
-export const crmClient = createApiClient(ZOHO_CRM_URL);
 export const learnClient = createApiClient(ZOHO_LEARN_URL);
 
 // ─── Error Handler ───────────────────────────────────────────────────────────
