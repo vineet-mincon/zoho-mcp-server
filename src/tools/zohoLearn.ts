@@ -300,4 +300,49 @@ Returns: List of learners with user_id, name, email, enrolled course count, and 
       } catch (e) { handleApiError(e, "zoho_learn_list_learners"); }
     }
   );
+
+  // ─── Add Quiz Question ────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_add_quiz_question",
+    {
+      title: "Add Quiz Question",
+      description: `Add a question to a quiz in a Zoho Learn course.
+
+Args:
+  - course_id (string): The course ID
+  - quiz_id (string): The quiz/assessment ID within the course
+  - question (string): The question text
+  - question_type (string): single_choice, multiple_choice, true_false, fill_in_the_blank
+  - options (array, optional): Answer options, each with text and is_correct flag. Required for choice-based questions.
+  - explanation (string, optional): Explanation shown after answering
+  - marks (number, optional): Points awarded for correct answer
+
+Returns: Created question with question_id`,
+      inputSchema: z.object({
+        course_id: z.string(),
+        quiz_id: z.string(),
+        question: z.string(),
+        question_type: z.enum(["single_choice", "multiple_choice", "true_false", "fill_in_the_blank"]),
+        options: z.array(z.object({
+          text: z.string(),
+          is_correct: z.boolean(),
+        })).optional(),
+        explanation: z.string().optional(),
+        marks: z.number().positive().optional(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ course_id, quiz_id, question, question_type, options, explanation, marks }) => {
+      try {
+        const body: Record<string, unknown> = { question, question_type };
+        if (options) body.options = options;
+        if (explanation) body.explanation = explanation;
+        if (marks) body.marks = marks;
+
+        const res = await learnClient.post(`/course/${course_id}/quiz/${quiz_id}/question`, body);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_add_quiz_question"); }
+    }
+  );
 }
