@@ -345,4 +345,267 @@ Returns: Created question with question_id`,
       } catch (e) { handleApiError(e, "zoho_learn_add_quiz_question"); }
     }
   );
+
+  // ─── List Quiz Questions ──────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_list_quiz_questions",
+    {
+      title: "List Quiz Questions",
+      description: `List all questions in a quiz within a Zoho Learn course.
+
+Args:
+  - course_id (string): The course ID
+  - quiz_id (string): The quiz/assessment ID
+
+Returns: List of questions with question_id, text, type, options, and marks`,
+      inputSchema: z.object({
+        course_id: z.string(),
+        quiz_id: z.string(),
+      }),
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ course_id, quiz_id }) => {
+      try {
+        const res = await learnClient.get(`/course/${course_id}/quiz/${quiz_id}/question`);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_list_quiz_questions"); }
+    }
+  );
+
+  // ─── List Lessons ─────────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_list_lessons",
+    {
+      title: "List Lessons in a Course",
+      description: `List all lessons in a Zoho Learn course with their IDs and metadata.
+
+Args:
+  - course_id (string): The course ID
+
+Returns: List of lessons with lesson_id, title, type, module, and order`,
+      inputSchema: z.object({
+        course_id: z.string(),
+      }),
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ course_id }) => {
+      try {
+        const res = await learnClient.get(`/course/${course_id}/lesson`);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_list_lessons"); }
+    }
+  );
+
+  // ─── Create Lesson ────────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_create_lesson",
+    {
+      title: "Create Text Lesson",
+      description: `Create a new text lesson inside a Zoho Learn course.
+
+Args:
+  - course_id (string): The course ID to add the lesson to
+  - title (string): Lesson title
+  - content (string): HTML or plain text content of the lesson
+  - module_id (string, optional): Module/section to place the lesson in
+  - order (number, optional): Position order within the module
+
+Returns: Created lesson with lesson_id`,
+      inputSchema: z.object({
+        course_id: z.string(),
+        title: z.string(),
+        content: z.string(),
+        module_id: z.string().optional(),
+        order: z.number().int().positive().optional(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ course_id, title, content, module_id, order }) => {
+      try {
+        const body: Record<string, unknown> = { title, content, type: "text" };
+        if (module_id) body.module_id = module_id;
+        if (order) body.order = order;
+
+        const res = await learnClient.post(`/course/${course_id}/lesson`, body);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_create_lesson"); }
+    }
+  );
+
+  // ─── Update Lesson ────────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_update_lesson",
+    {
+      title: "Update Lesson Content",
+      description: `Edit the content or title of an existing lesson in a Zoho Learn course.
+
+Args:
+  - course_id (string): The course ID
+  - lesson_id (string): The lesson ID to update
+  - title (string, optional): New lesson title
+  - content (string, optional): New HTML or plain text content
+
+Returns: Updated lesson`,
+      inputSchema: z.object({
+        course_id: z.string(),
+        lesson_id: z.string(),
+        title: z.string().optional(),
+        content: z.string().optional(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ course_id, lesson_id, title, content }) => {
+      try {
+        const body: Record<string, unknown> = {};
+        if (title) body.title = title;
+        if (content) body.content = content;
+
+        const res = await learnClient.put(`/course/${course_id}/lesson/${lesson_id}`, body);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_update_lesson"); }
+    }
+  );
+
+  // ─── Get Course Report ────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_get_course_report",
+    {
+      title: "Get Course Completion Report",
+      description: `Get completion rates, scores, and time spent for a course.
+
+Args:
+  - course_id (string): The course ID
+
+Returns: Completion rate, average score, average time spent, pass/fail counts`,
+      inputSchema: z.object({
+        course_id: z.string(),
+      }),
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ course_id }) => {
+      try {
+        const res = await learnClient.get(`/course/${course_id}/report`);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_get_course_report"); }
+    }
+  );
+
+  // ─── List All Progress ────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_list_all_progress",
+    {
+      title: "List All Learner Progress in a Course",
+      description: `Get progress of all enrolled learners across a course — not just one user.
+
+Args:
+  - course_id (string): The course ID
+  - status (string, optional): completed, in_progress, not_started
+
+Returns: List of learners with completion percentage, score, time spent, and completion date`,
+      inputSchema: z.object({
+        course_id: z.string(),
+        status: z.enum(["completed", "in_progress", "not_started"]).optional(),
+      }),
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ course_id, status }) => {
+      try {
+        const params: Record<string, unknown> = {};
+        if (status) params.status = status;
+
+        const res = await learnClient.get(`/course/${course_id}/progress`, { params });
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_list_all_progress"); }
+    }
+  );
+
+  // ─── Remove Enrollment ────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_remove_enrollment",
+    {
+      title: "Remove Enrollment",
+      description: `Unenroll a user from a Zoho Learn course.
+
+Args:
+  - course_id (string): The course ID
+  - user_email (string): Email of the learner to unenroll
+
+Returns: Confirmation of removal`,
+      inputSchema: z.object({
+        course_id: z.string(),
+        user_email: z.string().email(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ course_id, user_email }) => {
+      try {
+        const res = await learnClient.delete(`/course/${course_id}/enrollments`, {
+          data: { user_email },
+        });
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_remove_enrollment"); }
+    }
+  );
+
+  // ─── Create Category ──────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_create_category",
+    {
+      title: "Create Course Category",
+      description: `Create a new category to organize courses in Zoho Learn.
+
+Args:
+  - name (string): Category name
+  - description (string, optional): Category description
+
+Returns: Created category with category_id`,
+      inputSchema: z.object({
+        name: z.string(),
+        description: z.string().optional(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ name, description }) => {
+      try {
+        const body: Record<string, unknown> = { name };
+        if (description) body.description = description;
+
+        const res = await learnClient.post("/category", body);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_create_category"); }
+    }
+  );
+
+  // ─── Delete Course ────────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_delete_course",
+    {
+      title: "Delete Course",
+      description: `Permanently delete a course from Zoho Learn. This action cannot be undone.
+
+Args:
+  - course_id (string): The course ID to delete
+
+Returns: Confirmation of deletion`,
+      inputSchema: z.object({
+        course_id: z.string(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ course_id }) => {
+      try {
+        const res = await learnClient.delete(`/course/${course_id}`);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_delete_course"); }
+    }
+  );
 }
