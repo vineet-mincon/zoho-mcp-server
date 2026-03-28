@@ -107,8 +107,16 @@ learnClient.interceptors.request.use((config) => {
   const params = new URLSearchParams(config.params as Record<string, string>).toString();
   const url = `${config.baseURL}${config.url}${params ? "?" + params : ""}`;
   console.error(`[learnClient] ${config.method?.toUpperCase()} ${url}`);
+  if (config.data) console.error(`[learnClient] body: ${JSON.stringify(config.data)}`);
   return config;
 });
+learnClient.interceptors.response.use(
+  (res) => res,
+  (error: AxiosError) => {
+    console.error(`[learnClient] ERROR ${error.response?.status}: ${JSON.stringify(error.response?.data)}`);
+    return Promise.reject(error);
+  }
+);
 
 // ─── Error Handler ───────────────────────────────────────────────────────────
 
