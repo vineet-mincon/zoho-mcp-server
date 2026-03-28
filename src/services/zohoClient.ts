@@ -64,7 +64,7 @@ async function getAccessToken(): Promise<string> {
 
 // ─── API Client Factory ──────────────────────────────────────────────────────
 
-function createApiClient(baseURL: string): AxiosInstance {
+function createApiClient(baseURL: string, addOrgId = true): AxiosInstance {
   const client = axios.create({ baseURL });
 
   client.interceptors.request.use(async (config) => {
@@ -72,8 +72,9 @@ function createApiClient(baseURL: string): AxiosInstance {
     const { organizationId } = getConfig();
     config.headers["Authorization"] = `Zoho-oauthtoken ${token}`;
     config.headers["Content-Type"] = "application/json";
-    // Add org ID as query param for all clients
-    config.params = { ...config.params, organization_id: organizationId };
+    if (addOrgId) {
+      config.params = { ...config.params, organization_id: organizationId };
+    }
     return config;
   });
 
@@ -101,7 +102,7 @@ function createApiClient(baseURL: string): AxiosInstance {
 export const booksClient = createApiClient(ZOHO_BOOKS_URL);
 export const inventoryClient = createApiClient(ZOHO_INVENTORY_URL);
 
-export const learnClient = createApiClient(ZOHO_LEARN_URL);
+export const learnClient = createApiClient(ZOHO_LEARN_URL, false);
 learnClient.interceptors.request.use((config) => {
   const params = new URLSearchParams(config.params as Record<string, string>).toString();
   const url = `${config.baseURL}${config.url}${params ? "?" + params : ""}`;

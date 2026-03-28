@@ -21,13 +21,12 @@ Returns: List of courses with course_id, title, description, status, enrollment_
       inputSchema: z.object({
         search: z.string().optional(),
         status: z.enum(["published", "draft", "archived"]).optional(),
-        page: z.number().int().min(1).default(1),
       }),
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
-    async ({ search, status, page }) => {
+    async ({ search, status }) => {
       try {
-        const params: Record<string, unknown> = { page, per_page: 25 };
+        const params: Record<string, unknown> = {};
         if (search) params.search = search;
         if (status) params.status = status;
 
