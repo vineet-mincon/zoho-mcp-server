@@ -90,7 +90,7 @@ Returns: Created course with course_id`,
     },
     async (params) => {
       try {
-        const res = await learnClient.post("/courses", params);
+        const res = await learnClient.post("/course", params);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_create_course"); }
     }
@@ -125,7 +125,7 @@ Returns: Updated course`,
     },
     async ({ course_id, ...body }) => {
       try {
-        const res = await learnClient.put(`/courses/${course_id}`, body);
+        const res = await learnClient.put(`/course/${course_id}`, body);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_update_course"); }
     }
@@ -152,7 +152,7 @@ Returns: Updated course status`,
     },
     async ({ course_id, action }) => {
       try {
-        const res = await learnClient.post(`/courses/${course_id}/${action}`);
+        const res = await learnClient.post(`/course/${course_id}/${action}`);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_publish_course"); }
     }
@@ -216,7 +216,7 @@ Returns: Enrollment result with success/failure per user`,
         const body: Record<string, unknown> = { user_emails };
         if (due_date) body.due_date = due_date;
 
-        const res = await learnClient.post(`/courses/${course_id}/enrollments`, body);
+        const res = await learnClient.post(`/course/${course_id}/enrollments`, body);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_enroll_user"); }
     }
@@ -298,6 +298,50 @@ Returns: List of learners with user_id, name, email, enrolled course count, and 
         const res = await learnClient.get("/learners", { params });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_list_learners"); }
+    }
+  );
+
+  // ─── Create Quiz ──────────────────────────────────────────────────────────
+
+  server.registerTool(
+    "zoho_learn_create_quiz",
+    {
+      title: "Create Quiz",
+      description: `Create a new quiz/assessment inside a Zoho Learn course.
+
+Args:
+  - course_id (string): The course ID to add the quiz to
+  - title (string): Quiz title
+  - description (string, optional): Quiz description
+  - module_id (string, optional): Module/section to place the quiz in
+  - pass_percentage (number, optional): Minimum score percentage to pass (0-100)
+  - max_attempts (number, optional): Maximum number of attempts allowed
+  - time_limit (number, optional): Time limit in minutes
+
+Returns: Created quiz with quiz_id`,
+      inputSchema: z.object({
+        course_id: z.string(),
+        title: z.string(),
+        description: z.string().optional(),
+        module_id: z.string().optional(),
+        pass_percentage: z.number().min(0).max(100).optional(),
+        max_attempts: z.number().int().positive().optional(),
+        time_limit: z.number().int().positive().optional().describe("Time limit in minutes"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ course_id, title, description, module_id, pass_percentage, max_attempts, time_limit }) => {
+      try {
+        const body: Record<string, unknown> = { title };
+        if (description) body.description = description;
+        if (module_id) body.module_id = module_id;
+        if (pass_percentage !== undefined) body.pass_percentage = pass_percentage;
+        if (max_attempts) body.max_attempts = max_attempts;
+        if (time_limit) body.time_limit = time_limit;
+
+        const res = await learnClient.post(`/course/${course_id}/quiz`, body);
+        return { content: [{ type: "text", text: formatSuccess(res.data) }] };
+      } catch (e) { handleApiError(e, "zoho_learn_create_quiz"); }
     }
   );
 
