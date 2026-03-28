@@ -31,7 +31,7 @@ Returns: List of courses with course_id, title, description, status, enrollment_
         if (search) params.search = search;
         if (status) params.status = status;
 
-        const res = await learnClient.get("/courses", { params });
+        const res = await learnClient.get("/course", { params });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_list_courses"); }
     }
@@ -56,7 +56,7 @@ Returns: Complete course with modules, chapters, enrollment settings, and metada
     },
     async ({ course_id }) => {
       try {
-        const res = await learnClient.get(`/courses/${course_id}`);
+        const res = await learnClient.get(`/course/${course_id}`);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_get_course"); }
     }
@@ -185,7 +185,7 @@ Returns: List of enrollments with user info, progress percentage, and completion
         const params: Record<string, unknown> = { page, per_page: 25 };
         if (status) params.status = status;
 
-        const res = await learnClient.get(`/courses/${course_id}/enrollments`, { params });
+        const res = await learnClient.get(`/course/${course_id}/enrollments`, { params });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_list_enrollments"); }
     }
@@ -244,7 +244,7 @@ Returns: Progress details including completion percentage, time spent, module-le
     },
     async ({ course_id, user_email }) => {
       try {
-        const res = await learnClient.get(`/courses/${course_id}/progress`, {
+        const res = await learnClient.get(`/course/${course_id}/progress`, {
           params: { user_email },
         });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
