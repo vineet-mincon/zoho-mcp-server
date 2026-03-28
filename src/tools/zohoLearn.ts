@@ -26,7 +26,7 @@ Returns: List of courses with course_id, title, description, status, enrollment_
     },
     async ({ search, status }) => {
       try {
-        const params: Record<string, unknown> = {};
+        const params: Record<string, unknown> = { view: "author" };
         if (search) params.search = search;
         if (status) params.status = status;
 
