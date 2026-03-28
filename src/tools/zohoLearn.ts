@@ -184,7 +184,7 @@ Returns: List of enrollments with user info, progress percentage, and completion
         const params: Record<string, unknown> = { page, per_page: 25 };
         if (status) params.status = status;
 
-        const res = await learnClient.get(`/course/${course_id}/enrollments`, { params });
+        const res = await learnClient.get(`/course/${course_id}/member`, { params });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_list_enrollments"); }
     }
@@ -436,7 +436,7 @@ Returns: List of lessons with lesson_id, title, type, module, and order`,
     },
     async ({ course_id }) => {
       try {
-        const res = await learnClient.get(`/course/${course_id}/chapter`);
+        const res = await learnClient.get(`/course/${course_id}/lesson`);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_list_lessons"); }
     }
@@ -527,7 +527,7 @@ Returns: Completion rate, average score, average time spent, pass/fail counts`,
     },
     async ({ course_id }) => {
       try {
-        const res = await learnClient.get(`/course/${course_id}/report`);
+        const res = await learnClient.get(`/course/${course_id}/report`, { params: { isMemberView: false } });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_get_course_report"); }
     }
@@ -557,7 +557,7 @@ Returns: List of learners with completion percentage, score, time spent, and com
         const params: Record<string, unknown> = {};
         if (status) params.status = status;
 
-        const res = await learnClient.get(`/course/${course_id}/progress`, { params });
+        const res = await learnClient.get(`/course/${course_id}/report`, { params: { ...params, isMemberView: true } });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_list_all_progress"); }
     }
