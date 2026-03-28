@@ -307,7 +307,7 @@ Returns: List of learners with user_id, name, email, enrolled course count, and 
     "zoho_learn_create_quiz",
     {
       title: "Create Quiz",
-      description: `Create a new quiz/assessment inside a Zoho Learn course.
+      description: `Create a new quiz/assessment inside a Zoho Learn course. In Zoho Learn, a quiz is a chapter with type QUIZ. The returned chapter_id is what you pass to zoho_learn_add_quiz_question and zoho_learn_list_quiz_questions.
 
 Args:
   - course_id (string): The course ID to add the quiz to
@@ -318,7 +318,7 @@ Args:
   - max_attempts (number, optional): Maximum number of attempts allowed
   - time_limit (number, optional): Time limit in minutes
 
-Returns: Created quiz with quiz_id`,
+Returns: Created quiz chapter with chapter_id`,
       inputSchema: z.object({
         course_id: z.string(),
         title: z.string(),
@@ -339,7 +339,7 @@ Returns: Created quiz with quiz_id`,
         if (max_attempts) body.max_attempts = max_attempts;
         if (time_limit) body.time_limit = time_limit;
 
-        const res = await learnClient.post(`/course/${course_id}/quiz`, body);
+        const res = await learnClient.post(`/course/${course_id}/chapter`, { ...body, type: "QUIZ" });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_create_quiz"); }
     }
@@ -351,11 +351,11 @@ Returns: Created quiz with quiz_id`,
     "zoho_learn_add_quiz_question",
     {
       title: "Add Quiz Question",
-      description: `Add a question to a quiz in a Zoho Learn course.
+      description: `Add a question to a quiz in a Zoho Learn course. In Zoho Learn, a quiz is a chapter — pass the chapter_id of the quiz chapter here.
 
 Args:
   - course_id (string): The course ID
-  - quiz_id (string): The quiz/assessment ID within the course
+  - chapter_id (string): The chapter ID of the quiz (returned by zoho_learn_create_quiz or zoho_learn_list_lessons)
   - question (string): The question text
   - question_type (string): single_choice, multiple_choice, true_false, fill_in_the_blank
   - options (array, optional): Answer options, each with text and is_correct flag. Required for choice-based questions.
@@ -365,7 +365,7 @@ Args:
 Returns: Created question with question_id`,
       inputSchema: z.object({
         course_id: z.string(),
-        quiz_id: z.string(),
+        chapter_id: z.string(),
         question: z.string(),
         question_type: z.enum(["single_choice", "multiple_choice", "true_false", "fill_in_the_blank"]),
         options: z.array(z.object({
@@ -377,14 +377,14 @@ Returns: Created question with question_id`,
       }),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
-    async ({ course_id, quiz_id, question, question_type, options, explanation, marks }) => {
+    async ({ course_id, chapter_id, question, question_type, options, explanation, marks }) => {
       try {
         const body: Record<string, unknown> = { question, question_type };
         if (options) body.options = options;
         if (explanation) body.explanation = explanation;
         if (marks) body.marks = marks;
 
-        const res = await learnClient.post(`/course/${course_id}/quiz/${quiz_id}/question`, body);
+        const res = await learnClient.post(`/course/${course_id}/chapter/${chapter_id}/question`, body);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_add_quiz_question"); }
     }
@@ -396,22 +396,22 @@ Returns: Created question with question_id`,
     "zoho_learn_list_quiz_questions",
     {
       title: "List Quiz Questions",
-      description: `List all questions in a quiz within a Zoho Learn course.
+      description: `List all questions in a quiz within a Zoho Learn course. In Zoho Learn, a quiz is a chapter — pass the chapter_id of the quiz chapter here.
 
 Args:
   - course_id (string): The course ID
-  - quiz_id (string): The quiz/assessment ID
+  - chapter_id (string): The chapter ID of the quiz (returned by zoho_learn_list_lessons)
 
 Returns: List of questions with question_id, text, type, options, and marks`,
       inputSchema: z.object({
         course_id: z.string(),
-        quiz_id: z.string(),
+        chapter_id: z.string(),
       }),
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
-    async ({ course_id, quiz_id }) => {
+    async ({ course_id, chapter_id }) => {
       try {
-        const res = await learnClient.get(`/course/${course_id}/quiz/${quiz_id}/question`);
+        const res = await learnClient.get(`/course/${course_id}/chapter/${chapter_id}/question`);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_list_quiz_questions"); }
     }
@@ -436,7 +436,7 @@ Returns: List of lessons with lesson_id, title, type, module, and order`,
     },
     async ({ course_id }) => {
       try {
-        const res = await learnClient.get(`/course/${course_id}/lesson`);
+        const res = await learnClient.get(`/course/${course_id}/chapter`);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_list_lessons"); }
     }
@@ -473,7 +473,7 @@ Returns: Created lesson with lesson_id`,
         if (module_id) body.module_id = module_id;
         if (order) body.order = order;
 
-        const res = await learnClient.post(`/course/${course_id}/lesson`, body);
+        const res = await learnClient.post(`/course/${course_id}/chapter`, body);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_create_lesson"); }
     }
@@ -508,7 +508,7 @@ Returns: Updated lesson`,
         if (title) body.title = title;
         if (content) body.content = content;
 
-        const res = await learnClient.put(`/course/${course_id}/lesson/${lesson_id}`, body);
+        const res = await learnClient.put(`/course/${course_id}/chapter/${lesson_id}`, body);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_update_lesson"); }
     }
