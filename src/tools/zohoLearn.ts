@@ -339,7 +339,7 @@ Returns: Created quiz chapter with chapter_id`,
         if (max_attempts) body.max_attempts = max_attempts;
         if (time_limit) body.time_limit = time_limit;
 
-        const res = await learnClient.post(`/course/${course_id}/chapter`, { ...body, type: "QUIZ" });
+        const res = await learnClient.post(`/course/${course_id}/lesson`, { ...body, type: "QUIZ" });
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_create_quiz"); }
     }
@@ -448,32 +448,26 @@ Returns: List of lessons with lesson_id, title, type, module, and order`,
     "zoho_learn_create_lesson",
     {
       title: "Create Text Lesson",
-      description: `Create a new text lesson inside a Zoho Learn course.
+      description: `Create a new lesson inside a Zoho Learn course.
 
 Args:
   - course_id (string): The course ID to add the lesson to
-  - title (string): Lesson title
-  - content (string): HTML or plain text content of the lesson
-  - module_id (string, optional): Module/section to place the lesson in
-  - order (number, optional): Position order within the module
+  - name (string): Lesson title
+  - type (string, optional): TEXT (default), DOCUMENT, VIDEO, IMAGE, BLOCK, ASSIGNMENT
 
-Returns: Created lesson with lesson_id`,
+Returns: Created lesson with lesson id`,
       inputSchema: z.object({
         course_id: z.string(),
-        title: z.string(),
-        content: z.string(),
-        module_id: z.string().optional(),
-        order: z.number().int().positive().optional(),
+        name: z.string(),
+        type: z.enum(["TEXT", "DOCUMENT", "VIDEO", "IMAGE", "BLOCK", "ASSIGNMENT"]).default("TEXT"),
       }),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
-    async ({ course_id, title, content, module_id, order }) => {
+    async ({ course_id, name, type }) => {
       try {
-        const body: Record<string, unknown> = { title, content, type: "text" };
-        if (module_id) body.module_id = module_id;
-        if (order) body.order = order;
+        const body: Record<string, unknown> = { name, type };
 
-        const res = await learnClient.post(`/course/${course_id}/chapter`, body);
+        const res = await learnClient.post(`/course/${course_id}/lesson`, body);
         return { content: [{ type: "text", text: formatSuccess(res.data) }] };
       } catch (e) { handleApiError(e, "zoho_learn_create_lesson"); }
     }
