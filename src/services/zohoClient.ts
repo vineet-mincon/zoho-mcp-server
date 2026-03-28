@@ -100,7 +100,14 @@ function createApiClient(baseURL: string): AxiosInstance {
 
 export const booksClient = createApiClient(ZOHO_BOOKS_URL);
 export const inventoryClient = createApiClient(ZOHO_INVENTORY_URL);
+
 export const learnClient = createApiClient(ZOHO_LEARN_URL);
+learnClient.interceptors.request.use((config) => {
+  const params = new URLSearchParams(config.params as Record<string, string>).toString();
+  const url = `${config.baseURL}${config.url}${params ? "?" + params : ""}`;
+  console.error(`[learnClient] ${config.method?.toUpperCase()} ${url}`);
+  return config;
+});
 
 // ─── Error Handler ───────────────────────────────────────────────────────────
 
