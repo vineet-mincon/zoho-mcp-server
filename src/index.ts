@@ -59,9 +59,7 @@ async function runHTTP(): Promise<void> {
     if (!appId || !certId || !refreshToken) {
       throw new Error("Missing EBAY_APP_ID, EBAY_CERT_ID, or EBAY_REFRESH_TOKEN");
     }
-    const scope =
-      process.env.EBAY_SCOPES ??
-      "https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.inventory https://api.ebay.com/oauth/api_scope/sell.marketing https://api.ebay.com/oauth/api_scope/sell.account https://api.ebay.com/oauth/api_scope/sell.fulfillment";
+    const scope = process.env.EBAY_SCOPES ?? "https://api.ebay.com/oauth/api_scope";
     const basic = Buffer.from(`${appId}:${certId}`).toString("base64");
     const params = new URLSearchParams();
     params.set("grant_type", "refresh_token");
