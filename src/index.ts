@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import express from "express";
+import axios from "axios";
 
 import { registerInvoiceTools } from "./tools/invoices.js";
 import { registerSalesOrderTools } from "./tools/salesOrders.js";
@@ -44,6 +45,70 @@ async function runHTTP(): Promise<void> {
   // This is just to avoid confusion when hitting /mcp in a browser.
   res.status(200).send("MCP endpoint is up. Use POST /mcp (Streamable HTTP).");
 });
+
+  // ─── eBay Proxy ───────────────────────────────────────────────────────────
+  let ebayTokenCache: { token: string; expiresAt: number } | null = null;
+
+  async function getEbayAccessToken(): Promise<string> {
+    if (ebayTokenCache && Date.now() < ebayTokenCache.expiresAt) {
+      return ebayTokenCache.token;
+    }
+    const appId = process.env.EBAY_APP_ID;
+    const certId = process.env.EBAY_CERT_ID;
+    const refreshToken = process.env.EBAY_REFRESH_TOKEN;
+    if (!appId || !certId || !refreshToken) {
+      throw new Error("Missing EBAY_APP_ID, EBAY_CERT_ID, or EBAY_REFRESH_TOKEN");
+    }
+    const scope =
+      process.env.EBAY_SCOPES ??
+      "https://api.ebay.com/oauth/api_scope https://api.ebay.com/oauth/api_scope/sell.inventory https://api.ebay.com/oauth/api_scope/sell.marketing https://api.ebay.com/oauth/api_scope/sell.account https://api.ebay.com/oauth/api_scope/sell.fulfillment";
+    const basic = Buffer.from(`${appId}:${certId}`).toString("base64");
+    const params = new URLSearchParams();
+    params.set("grant_type", "refresh_token");
+    params.set("refresh_token", refreshToken);
+    params.set("scope", scope);
+    const resp = await axios.post(
+      "https://api.ebay.com/identity/v1/oauth2/token",
+      params.toString(),
+      {
+        headers: {
+          Authorization: `Basic ${basic}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+    const token = resp.data.access_token as string;
+    const expiresIn = (resp.data.expires_in as number) ?? 7200;
+    ebayTokenCache = { token, expiresAt: Date.now() + (expiresIn - 60) * 1000 };
+    return token;
+  }
+
+  app.post("/ebay", async (req, res) => {
+    try {
+      const { method, path, body } = req.body ?? {};
+      if (!method || !path) {
+        res.status(400).json({ error: "method and path are required" });
+        return;
+      }
+      const token = await getEbayAccessToken();
+      const resp = await axios.request({
+        method,
+        url: `https://api.ebay.com${path}`,
+        data: body,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        validateStatus: () => true,
+      });
+      res.status(resp.status).json(resp.data);
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number; data?: unknown }; message?: string };
+      res
+        .status(e.response?.status ?? 500)
+        .json(e.response?.data ?? { error: e.message ?? "Unknown error" });
+    }
+  });
 
   app.post("/mcp", async (req, res) => {
     const transport = new StreamableHTTPServerTransport({
