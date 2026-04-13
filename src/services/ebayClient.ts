@@ -1,4 +1,5 @@
 import axios from "axios";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
 
 let tokenCache: { token: string; expiresAt: number } | null = null;
 
@@ -56,4 +57,51 @@ export async function callEbayApi(
     validateStatus: () => true,
   });
   return { status: resp.status, data: resp.data };
+}
+
+export async function callEbayTradingApi(
+  callName: string,
+  params: Record<string, unknown> = {}
+): Promise<EbayProxyResult> {
+  const token = await getAccessToken();
+  const rootName = `${callName}Request`;
+  const requestObj = {
+    [rootName]: {
+      "@_xmlns": "urn:ebay:apis:eBLBaseComponents",
+      RequesterCredentials: { eBayAuthToken: token },
+      ...params,
+    },
+  };
+  const builder = new XMLBuilder({
+    ignoreAttributes: false,
+    format: false,
+    suppressEmptyNode: false,
+  });
+  const xmlBody =
+    '<?xml version="1.0" encoding="utf-8"?>\n' + builder.build(requestObj);
+
+  const resp = await axios.post("https://api.ebay.com/ws/api.dll", xmlBody, {
+    headers: {
+      "X-EBAY-API-SITEID": "0",
+      "X-EBAY-API-COMPATIBILITY-LEVEL": "967",
+      "X-EBAY-API-CALL-NAME": callName,
+      "X-EBAY-API-IAF-TOKEN": token,
+      "Content-Type": "text/xml",
+    },
+    responseType: "text",
+    transformResponse: (x) => x,
+    validateStatus: () => true,
+  });
+
+  const parser = new XMLParser({
+    ignoreAttributes: true,
+    parseTagValue: true,
+    trimValues: true,
+  });
+  const parsed = parser.parse(resp.data);
+  const unwrapped =
+    parsed && typeof parsed === "object" && `${callName}Response` in parsed
+      ? (parsed as Record<string, unknown>)[`${callName}Response`]
+      : parsed;
+  return { status: resp.status, data: unwrapped };
 }

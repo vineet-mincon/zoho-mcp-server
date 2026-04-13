@@ -11,7 +11,7 @@ import { registerBillTools } from "./tools/bills.js";
 import { registerContactTools, registerItemTools } from "./tools/contactsAndItems.js";
 import { registerLearnTools } from "./tools/zohoLearn.js";
 import { registerEbayTools } from "./tools/ebay.js";
-import { callEbayApi } from "./services/ebayClient.js";
+import { callEbayApi, callEbayTradingApi } from "./services/ebayClient.js";
 
 // ─── Server Init ─────────────────────────────────────────────────────────────
 
@@ -56,6 +56,23 @@ async function runHTTP(): Promise<void> {
         return;
       }
       const result = await callEbayApi(method, path, body);
+      res.status(result.status).json(result.data);
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number; data?: unknown }; message?: string };
+      res
+        .status(e.response?.status ?? 500)
+        .json(e.response?.data ?? { error: e.message ?? "Unknown error" });
+    }
+  });
+
+  app.post("/ebay-trading", async (req, res) => {
+    try {
+      const { callName, params } = req.body ?? {};
+      if (!callName || typeof callName !== "string") {
+        res.status(400).json({ error: "callName is required" });
+        return;
+      }
+      const result = await callEbayTradingApi(callName, params ?? {});
       res.status(result.status).json(result.data);
     } catch (err: unknown) {
       const e = err as { response?: { status?: number; data?: unknown }; message?: string };
