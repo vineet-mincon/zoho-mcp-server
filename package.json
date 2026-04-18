@@ -1,5 +1,5 @@
 {
-  "name": "zoho-mcp-server",
+  "name": "zoho-common-endpoints",
   "version": "1.0.0",
   "description": "MCP Server for Zoho Books, Inventory, and CRM",
   "main": "dist/index.js",

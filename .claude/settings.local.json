@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/vmiha/zoho-mcp-server -maxdepth 2 -type d ! -path */node_modules ! -path */.git)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(railway logs:*)",
+      "Bash(railway status:*)",
+      "Bash(railway service:*)",
+      "Bash(railway up:*)",
+      "Bash(railway domain:*)",
+      "Bash(curl:*)",
+      "Bash(python -c \"import sys,json; tools=json.load\\(sys.stdin\\)[''''result''''][''''tools'''']; [print\\(t[''''name'''']\\) for t in tools]\")",
+      "Bash(railway redeploy:*)",
+      "Bash(railway environment:*)",
+      "Bash(railway variables:*)",
+      "Bash(npm install:*)",
+      "WebFetch(domain:www.zoho.com)",
+      "Bash(claude doctor:*)"
+    ]
+  }
+}
