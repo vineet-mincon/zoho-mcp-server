@@ -13,7 +13,7 @@ export const swaggerDocument = {
   },
   servers: [
     {
-      url: "https://zoho-mcp-server-production.up.railway.app",
+      url: "https://zoho-mcp-server-production-bb70.up.railway.app",
       description: "Production (Railway)",
     },
     {
