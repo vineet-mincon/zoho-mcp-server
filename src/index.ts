@@ -2,7 +2,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import express from "express";
-import swaggerUi from "swagger-ui-express";
 import { swaggerDocument } from "./swagger.js";
 
 import { registerInvoiceTools } from "./tools/invoices.js";
@@ -40,7 +39,37 @@ async function runHTTP(): Promise<void> {
   const app = express();
   app.use(express.json());
 
-  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  // Serve raw OpenAPI spec
+  app.get("/docs/swagger.json", (_req, res) => {
+    res.json(swaggerDocument);
+  });
+
+  // Swagger UI loaded from CDN — no static file dependency
+  app.get("/docs", (_req, res) => {
+    res.setHeader("Content-Type", "text/html");
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zoho MCP Server — API Docs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: "/docs/swagger.json",
+      dom_id: "#swagger-ui",
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+      layout: "BaseLayout",
+      deepLinking: true,
+    });
+  </script>
+</body>
+</html>`);
+  });
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", server: "zoho-mcp-server", version: "1.0.0" });

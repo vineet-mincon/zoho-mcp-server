@@ -4,7 +4,7 @@
   "description": "MCP Server for Zoho Books, Inventory, and CRM",
   "main": "dist/index.js",
   "scripts": {
-    "build": "node ./node_modules/esbuild/bin/esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --external:@modelcontextprotocol/sdk --external:axios --external:express --external:zod --external:swagger-ui-express",
+    "build": "node ./node_modules/esbuild/bin/esbuild src/index.ts --bundle --platform=node --target=node18 --outfile=dist/index.js --external:@modelcontextprotocol/sdk --external:axios --external:express --external:zod",
     "start": "node dist/index.js"
   },
   "dependencies": {
