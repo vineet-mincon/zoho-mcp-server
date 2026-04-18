@@ -2,6 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import express from "express";
+import swaggerUi from "swagger-ui-express";
+import { swaggerDocument } from "./swagger.js";
 
 import { registerInvoiceTools } from "./tools/invoices.js";
 import { registerSalesOrderTools } from "./tools/salesOrders.js";
@@ -37,6 +39,8 @@ registerEbayTools(server);
 async function runHTTP(): Promise<void> {
   const app = express();
   app.use(express.json());
+
+  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", server: "zoho-mcp-server", version: "1.0.0" });
